@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ruleta Poética</title>
+<style>
+:root{--bg:#fff8ee;--ink:#1b1230;--c1:#ff2d55;--c2:#ff9500;--c3:#ffd60a;--c4:#30d158;--c5:#0a84ff;--c6:#5e5ce6;--c7:#bf5af2;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#150f24;--ink:#fff6e6}}
+:root[data-theme="dark"]{--bg:#150f24;--ink:#fff6e6}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Fraunces",Georgia,"Times New Roman",serif;overflow:hidden}
+#home{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.2rem;padding:1.5rem;text-align:center}
+#home h1{margin:0;font-size:clamp(1.6rem,5vw,2.6rem);font-weight:800;letter-spacing:-.01em}
+#go{width:min(78vw,340px);aspect-ratio:1;border:0;border-radius:50%;cursor:pointer;color:#fff;font:800 clamp(1.6rem,7vw,2.4rem)/1.1 "Fraunces",Georgia,serif;
+background:conic-gradient(var(--c1),var(--c2),var(--c3),var(--c4),var(--c5),var(--c6),var(--c7),var(--c1));
+box-shadow:0 0 0 10px var(--bg),0 0 0 14px var(--c6),0 20px 50px rgba(94,92,230,.45);
+text-shadow:0 2px 8px rgba(0,0,0,.55);animation:spin 9s linear infinite;transition:transform .15s}
+#go span{display:block;animation:spin 9s linear infinite reverse}
+#go:hover{transform:scale(1.05)}#go:active{transform:scale(.95)}
+#go:focus-visible,.btn:focus-visible{outline:4px solid var(--ink);outline-offset:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+#stage{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:calc(1.5rem + env(safe-area-inset-top,0px)) 1.5rem calc(1.5rem + env(safe-area-inset-bottom,0px));text-align:center;color:#fff;transition:background-color .09s linear;overflow-y:auto}
+#stage.on{display:flex}
+#autor{font-size:clamp(1.1rem,3.6vw,1.6rem);font-weight:800;min-height:1.6em;margin-bottom:1.2rem;background:rgba(0,0,0,.28);padding:.3rem 1.2rem;border-radius:99px}
+#cita{margin:0;max-width:24ch;font-size:clamp(1.7rem,6.5vw,3.8rem);font-weight:800;font-style:italic;line-height:1.15;text-shadow:0 3px 14px rgba(0,0,0,.45);text-wrap:balance}
+#cita.spinning{filter:blur(1.5px);opacity:.9}
+#cita.done{animation:pop .55s cubic-bezier(.2,1.6,.4,1)}
+#obra{margin:.8rem 0 0;font-size:clamp(.9rem,2.8vw,1.15rem);opacity:.9;min-height:1.4em}
+#consigna{margin:1.6rem 0 0;max-width:34ch;font-size:clamp(1.1rem,3.4vw,1.6rem);font-weight:700;line-height:1.3;background:rgba(0,0,0,.3);padding:.9rem 1.4rem;border-radius:18px;visibility:hidden}
+#consigna.show{visibility:visible}
+@keyframes pop{from{transform:scale(.6) rotate(-3deg)}to{transform:none}}
+#acciones{display:flex;gap:1rem;margin-top:1.8rem;flex-wrap:wrap;justify-content:center;visibility:hidden}
+#acciones.show{visibility:visible}
+.btn{font:700 1.15rem "Fraunces",Georgia,serif;border:0;border-radius:99px;padding:.85rem 1.7rem;cursor:pointer;background:#fff;color:#1b1230}
+.btn.alt{background:rgba(0,0,0,.35);color:#fff}
+@media (prefers-reduced-motion:reduce){#go,#go span{animation:none}#stage{transition:none}#cita.done{animation:none}}
+</style>
+</head>
+<body>
+<main id="home">
+  <h1>¿Con qué verso escribo hoy?</h1>
+  <button id="go" aria-label="Sortear un autor y un verso"><span>¡GIRAR!</span></button>
+</main>
+
+<section id="stage" aria-live="polite">
+  <div id="autor"></div>
+  <p id="cita"></p>
+  <p id="obra"></p>
+  <p id="consigna">✍️ Consigna: inspirándote en este verso, escribí una poesía de 2 estrofas de 4 versos cada una.</p>
+  <div id="acciones">
+    <button class="btn" id="otra">Girar de nuevo</button>
+    <button class="btn alt" id="cerrar">Volver</button>
+  </div>
+</section>
+
+<script>
+// [autor, cita textual, poema u obra]
+const POETAS=[
+["Rubén Darío","¡Juventud, divino tesoro, ya te vas para no volver!","«Canción de otoño en primavera»"],
+["Alfonsina Storni","Tú me quieres alba, me quieres de espumas, me quieres de nácar.","«Tú me quieres blanca»"],
+["Federico García Lorca","Verde que te quiero verde. Verde viento. Verdes ramas.","«Romance sonámbulo»"],
+["Antonio Machado","Caminante, no hay camino, se hace camino al andar.","«Proverbios y cantares»"],
+["Gustavo Adolfo Bécquer","Volverán las oscuras golondrinas en tu balcón sus nidos a colgar.","«Rima LIII»"],
+["Sor Juana Inés de la Cruz","Hombres necios que acusáis a la mujer sin razón.","«Redondillas»"],
+["José Martí","Cultivo una rosa blanca, en julio como en enero.","«Versos sencillos»"],
+["César Vallejo","Hay golpes en la vida, tan fuertes... ¡Yo no sé!","«Los heraldos negros»"],
+["José Hernández","Aquí me pongo a cantar al compás de la vigüela.","«Martín Fierro»"],
+["José de Espronceda","Con diez cañones por banda, viento en popa a toda vela.","«Canción del pirata»"],
+["Jorge Manrique","Nuestras vidas son los ríos que van a dar en la mar.","«Coplas por la muerte de su padre»"],
+["Garcilaso de la Vega","Corrientes aguas, puras, cristalinas.","«Égloga I»"],
+["Francisco de Quevedo","Polvo serán, mas polvo enamorado.","«Amor constante más allá de la muerte»"],
+["Luis de Góngora","Mientras por competir con tu cabello.","«Soneto CLXVI»"]
+];
+const COLORES=["#ff2d55","#ff9500","#e6a800","#1fae49","#0a84ff","#5e5ce6","#bf5af2"];
+const $=id=>document.getElementById(id);
+const stage=$("stage"),autor=$("autor"),cita=$("cita"),obra=$("obra"),cons=$("consigna"),acc=$("acciones");
+let timer=null,last=-1;
+const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+function girar(){
+  clearTimeout(timer);
+  stage.classList.add("on");acc.classList.remove("show");cons.classList.remove("show");
+  cita.classList.remove("done");cita.classList.add("spinning");
+  let i;do{i=Math.floor(Math.random()*POETAS.length)}while(i===last);last=i;
+  const total=reduce?1:26;let n=0,ci=Math.floor(Math.random()*COLORES.length);
+  (function paso(){
+    const esFinal=n>=total;
+    const p=esFinal?POETAS[i]:POETAS[Math.floor(Math.random()*POETAS.length)];
+    ci=(ci+1)%COLORES.length;
+    stage.style.backgroundColor=COLORES[ci];
+    autor.textContent=p[0];
+    cita.textContent="«"+p[1]+"»";
+    obra.textContent=esFinal?p[2]:"";
+    if(esFinal){
+      cita.classList.remove("spinning");cita.classList.add("done");
+      cons.classList.add("show");acc.classList.add("show");$("otra").focus();return;
+    }
+    n++;
+    timer=setTimeout(paso,60+Math.pow(n/total,3)*420);
+  })();
+}
+function cerrar(){clearTimeout(timer);stage.classList.remove("on");$("go").focus()}
+$("go").onclick=girar;$("otra").onclick=girar;$("cerrar").onclick=cerrar;
+document.addEventListener("keydown",e=>{if(e.key==="Escape")cerrar()});
+</script>
+</body>
+</html>
